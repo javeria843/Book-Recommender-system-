@@ -5,9 +5,9 @@ import numpy as np
 # ── PKL Load with Error Handling ──
 @st.cache_resource
 def load_data():
-    pt = pickle.load(open('pt.pkl', 'rb'))
-    similarity_scores = pickle.load(open('similarity_scores.pkl', 'rb'))
-    books = pickle.load(open('books.pkl', 'rb'))
+    pt = pickle.load(open('artifacts/pt.pkl', 'rb'))
+    similarity_scores = pickle.load(open('artifacts/similarity_scores.pkl', 'rb'))
+    books = pickle.load(open('artifacts/books.pkl', 'rb'))
     return pt, similarity_scores, books
 
 pt, similarity_scores, books = load_data()
@@ -157,7 +157,7 @@ if btn:
         for idx, book in enumerate(results):
             with cols[idx % 5]:
                 st.markdown('<div class="book-card">', unsafe_allow_html=True)
-                st.image(book['image'], use_column_width=True)
+                st.image(book['image'], use_container_width=True)
                 st.markdown(f'<div class="book-title">{book["title"][:40]}...</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="book-author">✍️ {book["author"]}</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="score-badge">⭐ {book["score"]}</div>', unsafe_allow_html=True)
