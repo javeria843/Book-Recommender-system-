@@ -1,7 +1,7 @@
 import streamlit as st
 import pickle
 import numpy as np
-
+ 
 # ── PKL Load with Error Handling ──
 @st.cache_resource
 def load_data():
@@ -9,9 +9,11 @@ def load_data():
     similarity_scores = pickle.load(open('artifacts/similarity_scores.pkl', 'rb'))
     books = pickle.load(open('artifacts/books.pkl', 'rb'))
     return pt, similarity_scores, books
-
+ 
 pt, similarity_scores, books = load_data()
-
+ 
+PLACEHOLDER_IMAGE = "https://via.placeholder.com/150x220?text=No+Image"
+ 
 # ── Recommend Function ──
 def recommend(book_name):
     if book_name not in pt.index:
@@ -24,14 +26,23 @@ def recommend(book_name):
         book_title = pt.index[i]
         book_data = books[books['Book-Title'] == book_title].drop_duplicates('Book-Title')
         if not book_data.empty:
+            image_url = book_data['Image-URL-M'].values[0]
+            # Guard against missing/NaN/empty image URLs which crash st.image()
+            if not isinstance(image_url, str) or not image_url.strip():
+                image_url = PLACEHOLDER_IMAGE
+ 
+            author = book_data['Book-Author'].values[0]
+            if not isinstance(author, str) or not author.strip():
+                author = "Unknown Author"
+ 
             results.append({
                 'title': book_title,
-                'author': book_data['Book-Author'].values[0],
-                'image': book_data['Image-URL-M'].values[0],
+                'author': author,
+                'image': image_url,
                 'score': round(float(score), 2)
             })
     return results
-
+ 
 # ── CSS Styling ──
 st.markdown("""
 <style>
@@ -124,11 +135,11 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # ── HERO SECTION ──
 st.markdown('<div class="hero-title">📚 Book Recommender</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-sub">Apni pasandida book chuniye aur similar books discover karein</div>', unsafe_allow_html=True)
-
+ 
 # ── STATS ──
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -137,30 +148,34 @@ with col2:
     st.markdown(f'<div class="stats-box"><h2 style="color:#f5a623">{books["Book-Author"].nunique()}</h2><p>Authors</p></div>', unsafe_allow_html=True)
 with col3:
     st.markdown(f'<div class="stats-box"><h2 style="color:#e94560">5</h2><p>Recommendations</p></div>', unsafe_allow_html=True)
-
+ 
 st.markdown("---")
-
+ 
 # ── SEARCH SECTION ──
 st.markdown('<div class="search-section">', unsafe_allow_html=True)
 selected_book = st.selectbox("🔍 **Book chuniye:**", sorted(pt.index), index=0)
 btn = st.button("✨ Recommend Karo!")
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # ── RESULTS ──
 if btn:
     with st.spinner("🔍 Best matches dhoondh raha hoon..."):
         results = recommend(selected_book)
-
+ 
     if results:
         st.markdown(f'<div class="result-header">✅ "{selected_book}" jesi books:</div>', unsafe_allow_html=True)
         cols = st.columns(5)
         for idx, book in enumerate(results):
             with cols[idx % 5]:
                 st.markdown('<div class="book-card">', unsafe_allow_html=True)
-                st.image(book['image'], use_container_width=True)
+                try:
+                    st.image(book['image'], use_container_width=True)
+                except Exception:
+                    st.image(PLACEHOLDER_IMAGE, use_container_width=True)
                 st.markdown(f'<div class="book-title">{book["title"][:40]}...</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="book-author">✍️ {book["author"]}</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="score-badge">⭐ {book["score"]}</div>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.error("❌ Koi recommendation nahi mili!")
+ 
